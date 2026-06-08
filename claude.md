@@ -63,10 +63,8 @@ mvn -q test
 
 1. **`hm-server/.../config/WebExceptionAdvice.java` 包名错误**
    声明为 `package main.java.com.hmdp.config;`，但文件在 `com/hmdp/config/` 下 → 编译失败，且不会被组件扫描到。应改为 `package com.hmdp.config;`。
-2. **`application.yaml` 中 `redis:` 层级错误**
-   `redis:` 顶格成了根节点。Spring Boot 3 的 Redis 配置应位于 `spring.data.redis.*`。当前写法下 Redis 连接配置完全不生效。
-3. **`application.yaml` 中 `Jackson:` 配置无效**
-   应为 `spring.jackson`（小写、且在 `spring` 之下）。当前大写且顶格，不会被识别。
+2. ~~**`application.yaml` 中 `redis:` 层级错误**~~ ✅ 已修复，移至 `spring.data.redis`。
+3. ~~**`application.yaml` 中 `Jackson:` 配置无效**~~ ✅ 已修复，改为 `spring.jackson`。
 
 ---
 
@@ -102,7 +100,7 @@ mvn -q test
 
 按顺序推进，每完成一项我应能讲清其背后的原理。可用作进度追踪：
 
-- [ ] **短信登录**：Session → Redis token，登录拦截器，ThreadLocal 保存用户（`UserHolder`）
+- [x] **短信登录**：Session → Redis token，登录拦截器，ThreadLocal 保存用户（`UserHolder`）——掌握了双拦截器设计（RefreshToken 刷新 TTL + Login 鉴权）、Hash 存用户、StringRedisTemplate 使用。
 - [ ] **商户缓存**：缓存查询、缓存更新策略、解决穿透/击穿/雪崩
 - [ ] **优惠券秒杀**：全局唯一 ID、超卖问题、乐观锁/悲观锁、一人一单
 - [ ] **分布式锁**：SETNX → 误删问题 → Lua 原子释放 → Redisson
