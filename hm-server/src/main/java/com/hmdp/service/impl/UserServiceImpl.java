@@ -1,6 +1,7 @@
 package com.hmdp.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.annotation.PhoneMarkAnnotation;
@@ -11,10 +12,18 @@ import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.User;
 import com.hmdp.mapper.UserMapper;
 import com.hmdp.service.IUserService;
-import com.hmdp.constants.SessionConstants;
+import com.hmdp.utils.RedisConstants;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -26,7 +35,20 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
+
+    private final StringRedisTemplate stringRedisTemplate;
+    private   HashOperations<String, String, Object> ops;
+
+    /**
+     * @PostConstruct 会在依赖注入完成后、Bean 投入使用前执行，此时 redisTemplate 已经有值了。
+     */
+    @PostConstruct
+    public void init()
+    {
+        ops = stringRedisTemplate.opsForHash();
+    }
 
     @Override
     @PhoneMarkAnnotation(value = "phone")
@@ -34,8 +56,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         try
         {
             String code = RandomUtil.randomNumbers(6);
-            log.warn("phone: {}, code: {}", phone, code);
-            session.setAttribute(SessionConstants.SEND_CODE, code);
+            // 每个手机号独立 key，避免共用 key 时 TTL 互相干扰
+            stringRedisTemplate.opsForValue().set(
+                    RedisConstants.LOGIN_CODE_KEY + phone, code,
+                    RedisConstants.LOGIN_CODE_TTL, TimeUnit.MINUTES);
             return Result.ok();
         }
         catch (Exception e)
@@ -48,10 +72,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     @PhoneMarkAnnotation
     public Result login(LoginFormDTO loginFormDTO, HttpSession session) {
-        //获取session
-        Object attribute = session.getAttribute(SessionConstants.SEND_CODE);
-        //校验session
-        if(!attribute.toString().equals(loginFormDTO.getCode())) {
+
+        String attribute = stringRedisTemplate.opsForValue().get(RedisConstants.LOGIN_CODE_KEY + loginFormDTO.getPhone());
+        if(attribute == null || !attribute.equals(loginFormDTO.getCode())) {
             return Result.fail("验证码错误");
         }
         //查库
@@ -62,8 +85,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
         //存入用户信息
         UserDTO userDTO = BeanUtil.copyProperties(user,UserDTO.class);
-        session.setAttribute(SessionConstants.CURRENT_USER, userDTO);
-        return Result.ok();
+        Map<String, Object> map = BeanUtil.beanToMap(userDTO,new HashMap<>(), CopyOptions.create()
+                                                                            .setIgnoreNullValue(true)
+                                                                            .setFieldValueEditor((fieldName, fieldValue) -> fieldValue.toString()));
+        String token = RandomUtil.randomString(32);
+        String tokenKey =  RedisConstants.LOGIN_USER_KEY + token;
+        ops.putAll(tokenKey,map);
+        stringRedisTemplate.expire(tokenKey, RedisConstants.LOGIN_USER_TTL, TimeUnit.MINUTES);
+        return Result.ok(token);
 
     }
 
