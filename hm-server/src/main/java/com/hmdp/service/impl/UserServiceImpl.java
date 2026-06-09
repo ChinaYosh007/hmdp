@@ -60,6 +60,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             stringRedisTemplate.opsForValue().set(
                     RedisConstants.LOGIN_CODE_KEY + phone, code,
                     RedisConstants.LOGIN_CODE_TTL, TimeUnit.MINUTES);
+            log.warn("code: {}",code);
             return Result.ok();
         }
         catch (Exception e)
