@@ -1,4 +1,4 @@
-package main.java.com.hmdp.config;
+package com.hmdp.config;
 
 import com.hmdp.dto.Result;
 import lombok.extern.slf4j.Slf4j;

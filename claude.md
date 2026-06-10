@@ -102,8 +102,8 @@ mvn -q test
 
 - [x] **短信登录**：Session → Redis token，登录拦截器，ThreadLocal 保存用户（`UserHolder`）——掌握了双拦截器设计（RefreshToken 刷新 TTL + Login 鉴权）、Hash 存用户、StringRedisTemplate 使用。
 - [x] **商户缓存**：缓存查询、缓存更新策略、解决穿透/击穿/雪崩——封装泛型工具 `RedisCacheUtils`（穿透=缓存空值、雪崩=随机 TTL、击穿=互斥锁+逻辑过期）；掌握了互斥锁的关键坑（锁 key 必须独立于数据 key、持锁者才解锁、查库放进 try-finally、double-check）、`Executor` vs `ExecutorService`/`execute` vs `submit`、Cache Aside（改库后删缓存）、逻辑过期需预热。已端到端实测通过。
-- [ ] **优惠券秒杀**：全局唯一 ID、超卖问题、乐观锁/悲观锁、一人一单
-- [ ] **分布式锁**：SETNX → 误删问题 → Lua 原子释放 → Redisson
+- [x] **优惠券秒杀**：全局唯一 ID（`RedisWorker`：时间戳<<32 | 当日自增，起始时间戳必须是过去）、超卖问题（乐观锁 CAS `gt("stock",0)`）、一人一单——掌握了关键执行顺序：**抢锁 → 进事务 → 一人一单校验 → 扣库存（CAS）→ 下单**，扣库存必须在锁内+事务内，否则同一用户并发会重复扣且回不了滚。
+- [x] **分布式锁**：手写 `RedisLock`（SETNX + UUID/线程id 标识 + `unlock.lua` 原子释放，理解误删问题）；生产改用 **Redisson**（看门狗续期、可重入），配 `exposeProxy=true` + `AopContext.currentProxy()` 解决 `@Transactional` 自调用失效。
 - [ ] **秒杀优化**：Lua + 阻塞队列/消息队列异步下单
 - [ ] **达人探店**：点赞(ZSet 排行)、关注与共同关注(Set)、Feed 推送
 - [ ] **附近商户**：Redis GEO
