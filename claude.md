@@ -101,7 +101,7 @@ mvn -q test
 按顺序推进，每完成一项我应能讲清其背后的原理。可用作进度追踪：
 
 - [x] **短信登录**：Session → Redis token，登录拦截器，ThreadLocal 保存用户（`UserHolder`）——掌握了双拦截器设计（RefreshToken 刷新 TTL + Login 鉴权）、Hash 存用户、StringRedisTemplate 使用。
-- [ ] **商户缓存**：缓存查询、缓存更新策略、解决穿透/击穿/雪崩
+- [x] **商户缓存**：缓存查询、缓存更新策略、解决穿透/击穿/雪崩——封装泛型工具 `RedisCacheUtils`（穿透=缓存空值、雪崩=随机 TTL、击穿=互斥锁+逻辑过期）；掌握了互斥锁的关键坑（锁 key 必须独立于数据 key、持锁者才解锁、查库放进 try-finally、double-check）、`Executor` vs `ExecutorService`/`execute` vs `submit`、Cache Aside（改库后删缓存）、逻辑过期需预热。已端到端实测通过。
 - [ ] **优惠券秒杀**：全局唯一 ID、超卖问题、乐观锁/悲观锁、一人一单
 - [ ] **分布式锁**：SETNX → 误删问题 → Lua 原子释放 → Redisson
 - [ ] **秒杀优化**：Lua + 阻塞队列/消息队列异步下单
