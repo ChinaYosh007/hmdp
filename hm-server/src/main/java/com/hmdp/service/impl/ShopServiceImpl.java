@@ -45,7 +45,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
        {
            return Result.fail("店铺id不能为空");
        }
-      Shop shop = redisCacheUtils.queryWithLogicExpire(CACHE_SHOP_KEY,id,Shop.class,this::getById);
+      Shop shop = redisCacheUtils.queryWithMutex(CACHE_SHOP_KEY,id,Shop.class,this::getById);
        return shop == null ?  Result.fail("this shop isn't have!!!"):Result.ok(shop);
     }
 

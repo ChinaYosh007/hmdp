@@ -12,6 +12,7 @@ import com.hmdp.utils.RedisSeckillUtils;
 import com.hmdp.utils.RedisWorker;
 import com.hmdp.utils.UserHolder;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.redisson.RedissonLock;
@@ -54,7 +55,7 @@ public class  VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vo
     private StringRedisTemplate stringRedisTemplate;
     @Autowired
     private RedissonClient redissonClient;
-
+    private Boolean running = true;
     @PostConstruct
     private void init()
     {
@@ -72,13 +73,18 @@ public class  VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vo
         executorService.submit(new VoucherOrderHandler());
 
     }
+    @PreDestroy
+    private  void stopATX()
+    {
+        this.running = false;
+    }
     private class VoucherOrderHandler implements Runnable
     {
 
         @Override
         public void run()
         {
-            while (true)
+            while (running)
             {
                 try
                 {
@@ -123,7 +129,7 @@ public class  VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vo
         //死信队列
         private void handlePendingList()
         {
-            while(true)
+            while(running)
             {
                 try
                 {

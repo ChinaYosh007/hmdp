@@ -13,6 +13,7 @@ import com.hmdp.entity.User;
 import com.hmdp.mapper.UserMapper;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.RedisConstants;
+import com.hmdp.utils.UserHolder;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +23,10 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -95,6 +98,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         stringRedisTemplate.expire(tokenKey, RedisConstants.LOGIN_USER_TTL, TimeUnit.MINUTES);
         return Result.ok(token);
 
+    }
+
+    @Override
+    public Result logout() {
+        UserHolder.removeUser();
+        return Result.ok();
+    }
+
+    @Override
+    public List<User> likeByIds(List<Long> collect) {
+        return collect.stream().map(id ->
+        {
+            return this.getById(id);
+        }).collect(Collectors.toList());
     }
 
     public User register(LoginFormDTO loginFormDTO) {
