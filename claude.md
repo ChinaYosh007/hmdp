@@ -104,7 +104,7 @@ mvn -q test
 - [x] **商户缓存**：缓存查询、缓存更新策略、解决穿透/击穿/雪崩——封装泛型工具 `RedisCacheUtils`（穿透=缓存空值、雪崩=随机 TTL、击穿=互斥锁+逻辑过期）；掌握了互斥锁的关键坑（锁 key 必须独立于数据 key、持锁者才解锁、查库放进 try-finally、double-check）、`Executor` vs `ExecutorService`/`execute` vs `submit`、Cache Aside（改库后删缓存）、逻辑过期需预热。已端到端实测通过。
 - [x] **优惠券秒杀**：全局唯一 ID（`RedisWorker`：时间戳<<32 | 当日自增，起始时间戳必须是过去）、超卖问题（乐观锁 CAS `gt("stock",0)`）、一人一单——掌握了关键执行顺序：**抢锁 → 进事务 → 一人一单校验 → 扣库存（CAS）→ 下单**，扣库存必须在锁内+事务内，否则同一用户并发会重复扣且回不了滚。
 - [x] **分布式锁**：手写 `RedisLock`（SETNX + UUID/线程id 标识 + `unlock.lua` 原子释放，理解误删问题）；生产改用 **Redisson**（看门狗续期、可重入），配 `exposeProxy=true` + `AopContext.currentProxy()` 解决 `@Transactional` 自调用失效。
-- [ ] **秒杀优化**：Lua + 阻塞队列/消息队列异步下单
+- [x] **秒杀优化**：Lua + 阻塞队列/消息队列异步下单——掌握了 Lua 脚本原子判资格（SISMEMBER + DECRBY + SADD，tonumber 转换，提前返回区分 0/1/2）、orderId 必须在入队前生成、后台线程需注入 proxy 解决 @Transactional 失效、BlockingQueue 用 take() 阻塞而非 isEmpty() 空转；最终升级为 Redis Stream（createGroup 启动时初始化、ACK 确认、pending list 重试兜底）。
 - [ ] **达人探店**：点赞(ZSet 排行)、关注与共同关注(Set)、Feed 推送
 - [ ] **附近商户**：Redis GEO
 - [ ] **用户签到**：BitMap

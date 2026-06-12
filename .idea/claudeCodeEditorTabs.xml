@@ -1,23 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ClaudeCodeEditorTabs">
-    <option name="activeSessionId" value="dd9fe131-97d8-41b0-a201-1d5acd262374" />
+    <option name="activeSessionId" value="a8cc5b62-c245-4327-88b3-e22e81b65af8" />
     <option name="openSessionIds">
       <list>
-        <option value="0599e795-34b0-4490-93ed-8e8d2c569aa2" />
-        <option value="dd9fe131-97d8-41b0-a201-1d5acd262374" />
+        <option value="a8cc5b62-c245-4327-88b3-e22e81b65af8" />
       </list>
     </option>
     <option name="sessionPaths">
       <map>
-        <entry key="0599e795-34b0-4490-93ed-8e8d2c569aa2" value="/sessions/ba6d778b-e4f6-45e8-ad3d-625fac6419ab" />
-        <entry key="dd9fe131-97d8-41b0-a201-1d5acd262374" value="/sessions/new" />
+        <entry key="a8cc5b62-c245-4327-88b3-e22e81b65af8" value="/sessions/cee5923f-a6fa-4608-a5a2-cef0a8dc1297" />
       </map>
     </option>
     <option name="sessionTitles">
       <map>
-        <entry key="0599e795-34b0-4490-93ed-8e8d2c569aa2" value="对我今天的修改进行debug,检查一下" />
-        <entry key="dd9fe131-97d8-41b0-a201-1d5acd262374" value="Claude Code" />
+        <entry key="a8cc5b62-c245-4327-88b3-e22e81b65af8" value="你认为我需要引入mq吗" />
       </map>
     </option>
   </component>
