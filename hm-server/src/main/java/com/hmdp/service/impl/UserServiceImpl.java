@@ -18,10 +18,14 @@ import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.text.DateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -112,6 +116,41 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         {
             return this.getById(id);
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public Result sign() {
+        UserDTO userDTO = UserHolder.getUser();
+        LocalDateTime now = LocalDateTime.now();
+        String format = now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
+        String key = RedisConstants.USER_SIGN_KEY + format + userDTO.getId().toString();
+        int dayOfMonth = now.getDayOfMonth() - 1;
+        stringRedisTemplate.opsForValue().setBit(key,dayOfMonth,true);
+        return Result.ok();
+
+
+    }
+
+    @Override
+    public Result countSign() {
+        UserDTO userDTO = UserHolder.getUser();
+        LocalDateTime now = LocalDateTime.now();
+        String format = now.format(DateTimeFormatter.ofPattern("yyyyMM:"));
+        String key = RedisConstants.USER_SIGN_KEY + format + userDTO.getId().toString();
+        int dayOfMonth = now.getDayOfMonth();
+        List<Long> result = stringRedisTemplate.opsForValue().bitField(key, BitFieldSubCommands.create()
+                .get(BitFieldSubCommands.BitFieldType.unsigned(dayOfMonth)).valueAt(0));
+        if (result == null || result.isEmpty()) {
+            // 没有任何签到结果
+            return Result.ok(0);
+        }
+        Long num = result.get(0);
+        if (num == null || num == 0) {
+            return Result.ok(0);
+        }
+        int cnt = 0;
+        while((num >> cnt & 1 ) == 1) cnt++;
+        return Result.ok(cnt);
     }
 
     public User register(LoginFormDTO loginFormDTO) {

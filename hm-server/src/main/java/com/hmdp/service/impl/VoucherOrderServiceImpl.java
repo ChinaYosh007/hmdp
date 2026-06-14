@@ -55,7 +55,7 @@ public class  VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vo
     private StringRedisTemplate stringRedisTemplate;
     @Autowired
     private RedissonClient redissonClient;
-    private Boolean running = true;
+    private volatile Boolean  running = true;
     @PostConstruct
     private void init()
     {

@@ -32,7 +32,7 @@ import static com.hmdp.utils.RedisConstants.*;
  * * 方法4：根据指定的key查询缓存，并反序列化为指定类型，需要利用逻辑过期解决缓存击穿问题
  */
 public class RedisCacheUtils {
-    private   final StringRedisTemplate stringRedisTemplate;
+    private        final StringRedisTemplate stringRedisTemplate;
     private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10);
     public Boolean tryLock(String key)
     {
