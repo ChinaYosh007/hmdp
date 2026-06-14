@@ -24,4 +24,8 @@ public interface IUserService extends IService<User> {
     Result logout();
 
     List<User> likeByIds(List<Long> collect);
+
+    Result sign();
+
+    Result countSign();
 }

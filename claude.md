@@ -105,9 +105,10 @@ mvn -q test
 - [x] **优惠券秒杀**：全局唯一 ID（`RedisWorker`：时间戳<<32 | 当日自增，起始时间戳必须是过去）、超卖问题（乐观锁 CAS `gt("stock",0)`）、一人一单——掌握了关键执行顺序：**抢锁 → 进事务 → 一人一单校验 → 扣库存（CAS）→ 下单**，扣库存必须在锁内+事务内，否则同一用户并发会重复扣且回不了滚。
 - [x] **分布式锁**：手写 `RedisLock`（SETNX + UUID/线程id 标识 + `unlock.lua` 原子释放，理解误删问题）；生产改用 **Redisson**（看门狗续期、可重入），配 `exposeProxy=true` + `AopContext.currentProxy()` 解决 `@Transactional` 自调用失效。
 - [x] **秒杀优化**：Lua + 阻塞队列/消息队列异步下单——掌握了 Lua 脚本原子判资格（SISMEMBER + DECRBY + SADD，tonumber 转换，提前返回区分 0/1/2）、orderId 必须在入队前生成、后台线程需注入 proxy 解决 @Transactional 失效、BlockingQueue 用 take() 阻塞而非 isEmpty() 空转；最终升级为 Redis Stream（createGroup 启动时初始化、ACK 确认、pending list 重试兜底）。
-- [ ] **达人探店**：点赞(ZSet 排行)、关注与共同关注(Set)、Feed 推送
-- [ ] **附近商户**：Redis GEO
-- [ ] **用户签到**：BitMap
-- [ ] **UV 统计**：HyperLogLog
+- [x] **达人探店**：点赞(ZSet 排行)、关注与共同关注(Set)、Feed 推送——掌握了 ZSet score=时间戳实现点赞排行、Set intersect 实现共同关注、Feed 推模式（发博时写粉丝收件箱）、基于 score 的滚动分页（minTime + offset 避免翻页漂移）；踩坑：StringRedisTemplate 值必须是 String、Java Stream 只能消费一次、@RestControllerAdvice 按异常具体度优先匹配。
+- [x] **附近商户**：Redis GEO——掌握了 GEO 底层是 ZSet（GeoHash 当 score）、预热按 typeId 分 key 批量 `GEOADD`（member=shopId, x=经度 y=纬度）、查询用 `opsForGeo().search(FROMLONLAT + BYRADIUS + includeDistance + limit)`（6.2+ 用 `search` 而非废弃的 `radius`）；GEOSEARCH 不支持 offset，分页靠 `limit(end)` + Java 端 `stream().skip(from)` 逻辑分页；坑：单位要显式 `Metrics.KILOMETERS`、`includeDistance()` 不加则 `getDistance()` 为 null、结果本就按距离升序不要 reversed、Controller 坐标参数要 `required=false` 才能走兜底分页。
+- [x] **用户签到**：BitMap——`setBit(key, dayOfMonth-1, true)` 签到（day1→offset0），`bitField GET u{dayOfMonth} 0` 一次取回整月位串，`while((num>>cnt & 1)==1) cnt++` 从最低位数连续签到天数（Redis 中 offset0 是最高位，所以 bit0=今天）。
+- [x] **UV 统计**：HyperLogLog（已跳过，不实现——原理：基于基数估算的概率算法，12KB 固定内存统计上亿 UV，有约 0.81% 误差，适合「只要大致去重总数、不要精确值」的场景，如 UV/PV 统计）
+- [x] **【额外加练】布隆过滤器防穿透**：BitMap + 多哈希——手写 `BloomFilter`（课程未教，按原理自造）。掌握了：bitmap + k 个哈希、「说没有一定没有，说有可能误判（只有假阳性、无假阴性）」、双重哈希 `index_i = h1 + i*h2` 派生 k 个位置（h1/h2 固定只变 i）、`BIT_SIZE` 取 2 的幂 → `& (BIT_SIZE-1)` 一步完成「取模 + 去负号」（`%` 会出负下标、`Math.abs(MIN_VALUE)` 仍为负）、murmur 优于 hashCode、布隆+缓存空值两道防线、必须预热 + 写时同步（数据 ⊇ DB）。详见 `mistake/bloom-filter-notes.md`。
 
 > 进度更新约定：完成一项后，请把对应 `[ ]` 改为 `[x]`，并在该行后用一句话记下我掌握的关键点。
