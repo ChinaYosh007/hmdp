@@ -53,7 +53,8 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
     @Override
     public Result queryById(Long id) {
         if (!bloomFilter.contains(id.toString())) {
-            return Result.fail("店铺不存在");   // 布隆说没有 = 一定没有
+            return Result.fail("店铺不存在")
+                    ;   // 布隆说没有 = 一定没有
         }
 
         if(id == null || id < 1)
@@ -90,6 +91,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
                 .                               search(SHOP_GEO_KEY + shop.getTypeId(),
                                                           GeoReference.fromCoordinate(shop.getX(), shop.getY()), //经纬度
                                                           new Distance(5,Metrics.KILOMETERS),// 距离
+
                                                           RedisGeoCommands.GeoSearchCommandArgs.newGeoSearchArgs().
                                                               includeDistance().limit(end) // 显示距离和限制
 
